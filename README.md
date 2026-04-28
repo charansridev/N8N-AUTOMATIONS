@@ -1,4 +1,4 @@
-# 🚀 Agentic API Orchestration & AI Automations
+# 🚀 N8N AUTOMATIONS
 
 A repository of autonomous, multi-step n8n workflows integrating Large Language Models (LLMs) for data synthesis, multimodal generation, and seamless API orchestration. 
 
