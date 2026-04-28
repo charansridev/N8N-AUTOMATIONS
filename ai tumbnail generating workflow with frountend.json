@@ -1,0 +1,190 @@
+{
+  "name": "ai tumbnail generating workflow with frountend",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3cb2c787-8b85-47b7-9045-d1fdff40d9fe",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1056,
+        -64
+      ],
+      "id": "1be7716a-d155-4968-b06a-9618cbfe9630",
+      "name": "Receive Prompt",
+      "webhookId": "3cb2c787-8b85-47b7-9045-d1fdff40d9fe"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "responseDataSource": "set",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2176,
+        -64
+      ],
+      "id": "ab82b815-7173-4d03-89c9-df2fe726bfa0",
+      "name": "Return Image"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        -64
+      ],
+      "id": "12fe2ac1-dbf0-41ca-aaeb-32ff8cd7321b",
+      "name": "Wait for Image",
+      "webhookId": "2f97189c-8f36-4aff-b311-19cf3890e106"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.freepik.com/v1/ai/text-to-image/imagen3/{{ $json.data.task_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-freepik-api-key",
+              "value": "FPSXb0eaf3057f2aa869f40bd3dea9bfd959"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1728,
+        -64
+      ],
+      "id": "94e74637-3172-4233-a545-628334900c7e",
+      "name": "Check Status"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data.generated[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1952,
+        -64
+      ],
+      "id": "07699272-3541-4e7a-9e58-ce0d12e33204",
+      "name": "Retrieve Generated Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.freepik.com/v1/ai/text-to-image/imagen3",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-freepik-api-key",
+              "value": "FPSXb0eaf3057f2aa869f40bd3dea9bfd959"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.body.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        -64
+      ],
+      "id": "fa077b9f-2941-461a-ad43-e9021ae87ffa",
+      "name": "Send Text Prompt to Freepik API"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Prompt": {
+      "main": [
+        [
+          {
+            "node": "Send Text Prompt to Freepik API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Image": {
+      "main": [
+        [
+          {
+            "node": "Check Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Status": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Generated Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Generated Image": {
+      "main": [
+        [
+          {
+            "node": "Return Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Text Prompt to Freepik API": {
+      "main": [
+        [
+          {
+            "node": "Wait for Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ca18281a-f64d-4f30-a459-8d2441afe944",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "969257b09ad2942bbaff2e2288304f4969030574d109cdeca05bf11f630884df"
+  },
+  "id": "eI9yXpbDvI2cSCEi",
+  "tags": []
+}
