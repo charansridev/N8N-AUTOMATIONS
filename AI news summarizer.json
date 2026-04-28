@@ -50,7 +50,7 @@
     },
     {
       "parameters": {
-        "url": "https://serpapi.com/search",
+        "url": "https://serp.com/search",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -64,7 +64,7 @@
             },
             {
               "name": "api_key",
-              "value": "ceb0648a89dca12b8835103ba54ff5cb2d7f61c937ce0a0dac6160aaa9e27b71"
+              "value": "Add your api key"
             }
           ]
         },
@@ -142,9 +142,9 @@
       "id": "a8936674-d990-4515-92ef-7b52571300aa",
       "name": "Google Gemini Chat Model",
       "credentials": {
-        "googlePalmApi": {
+        "googlePalm": {
           "id": "0bYgTrumseI3jnIG",
-          "name": "Google Gemini(PaLM) Api account 436"
+          "name": "Google Gemini(PaLM)  account 436"
         }
       }
     },
