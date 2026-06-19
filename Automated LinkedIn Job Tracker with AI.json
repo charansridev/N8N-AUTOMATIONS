@@ -1,0 +1,263 @@
+{
+  "name": "Automated LinkedIn Job Tracker with AI",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        336,
+        -32
+      ],
+      "id": "5e9f723e-8317-48ac-9296-3eae999d48a0",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/aMgiakD8zFniaMgiUfNukboi.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        -32
+      ],
+      "id": "d3d94108-fbd5-4787-82d6-038e15f25891",
+      "name": "RSS Feed LinkedIn"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a compelling 250-300 word cover letter that addresses the specific company and role, references key responsibilities, shows enthusiasm for mentioned aspects, includes relevant matching skills, and uses professional yet enthusiastic tone.\nStructure the cover letter as: Opening (interest in role) -> Middle (relevant skills/experience) -> Closing (enthusiasm and next steps).\n\nInput data:\nTitle: {{ $('RSS Feed LinkedIn').item.json.title }}\nLink: {{ $('RSS Feed LinkedIn').item.json.link }}\nPublished Date: {{ $json.pubDate }}\nAbout Company and job description: {{ $json.contentSnippet }}\n\nCRITICAL OUTPUT INSTRUCTIONS:\nReturn your response strictly as a raw, valid JSON object matching the exact structure below. Do NOT wrap the response in Markdown code blocks. Do not use the word json or any backticks.\n{\n\"extracted_skills\": [\"skill 1\", \"skill 2\"],\n\"cover_letter\": \"Your generated cover letter text goes here\"\n}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        784,
+        -32
+      ],
+      "id": "7cd4dac5-5c96-4da4-85a9-dcbe04ff4181",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Title\": \"Job Title from RSS Feed\",\n  \"Link\": \"Job posting URL\",\n  \"Published Date\": \"Publication timestamp\",\n  \"About Company and job description\": \"Full job description content\",\n  \"skills\": \"[Array of extracted technical skills]\",\n  \"cover letter\": \"Generated personalized cover letter\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        208
+      ],
+      "id": "b7193aec-38a4-4624-9d6e-726e9feb8e16",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        784,
+        208
+      ],
+      "id": "eacfec34-1284-4073-8360-5fa00ebb8ce5",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GleFeYurfpaTbSzc",
+          "name": "Google Gemini(PaLM) Api account 10512"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appIKm1fupMyEIiCG",
+          "mode": "list",
+          "cachedResultName": "Application",
+          "cachedResultUrl": "https://airtable.com/appIKm1fupMyEIiCG"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblEWZpmxCJo3cbhq",
+          "mode": "list",
+          "cachedResultName": "job Tracker",
+          "cachedResultUrl": "https://airtable.com/appIKm1fupMyEIiCG/tblEWZpmxCJo3cbhq"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.output.Title }}",
+            "link": "={{ $json.output.Link }}",
+            "Published Date": "={{ $json.output['Published Date'] }}",
+            "Extracted Skills": "={{ $json.output.skills }}",
+            "Cover Letter": "={{ $json.output['cover letter'] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Published Date",
+              "displayName": "Published Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Extracted Skills",
+              "displayName": "Extracted Skills",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cover Letter",
+              "displayName": "Cover Letter",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        -32
+      ],
+      "id": "b884aa84-4518-486f-b706-619b77f68bc7",
+      "name": "Create a record",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "KCNBQYMvWJJ5ckjk",
+          "name": "Airtable Personal Access Token account 12"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7de06839-a44f-4ee8-94f2-b483b2d7548b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "969257b09ad2942bbaff2e2288304f4969030574d109cdeca05bf11f630884df"
+  },
+  "id": "op5rEAPUzjZkRyKp",
+  "tags": []
+}
