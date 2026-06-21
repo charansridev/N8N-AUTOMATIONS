@@ -70,7 +70,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer a7f66ed8301ab070334cb9e6049133fb"
+              "value": "Bearer"
             }
           ]
         },
@@ -162,7 +162,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer a7f66ed8301ab070334cb9e6049133fb"
+              "value": "Bearer"
             }
           ]
         },
