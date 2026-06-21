@@ -1,0 +1,261 @@
+{
+  "name": "song generation",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        384
+      ],
+      "id": "51c95650-0227-4b05-9bb6-b33fcc576a4a",
+      "name": "When chat message received",
+      "webhookId": "904330fe-c98c-4f41-922f-b0c7034ce46b"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a Lyrics Generation Agent.\n\nYour task is to take the user's request and generate complete song lyrics based on their input.\n\nInstructions:\n- Generate full song lyrics with verses, chorus, and bridge as appropriate\n- Keep the lyrics relevant to the user's theme/topic\n- Make the lyrics creative and engaging\n- Output only the lyrics text, nothing else\n- No extra formatting, just plain lyrics\n\nExample Input:\n\"Create a rap song about crypto in a fast style\"\n\nExample Output:\n[Verse 1]\nCrypto rising, numbers flying high\nBlockchain dreams reaching for the sky\nBitcoin pumping, altcoins in the race\nDigital money taking center stage\n\n[Chorus]\nTo the moon we go, never looking back\nCrypto life, staying on track\nHODL strong through the ups and downs\nDigital gold, wearing the crown\n\n[Verse 2]\nSmart contracts running through the night\nDeFi protocols burning bright\nNFTs and tokens everywhere\nCrypto future beyond compare"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1856,
+        384
+      ],
+      "id": "b97466a7-d0ea-4f6a-a810-8f741119322b",
+      "name": "Generate Lyrics"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        624
+      ],
+      "id": "e004ea17-58f3-4b16-a146-7e055e257641",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "opGl9tU4uFcGiWMx",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sunoapi.org/api/v1/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer a7f66ed8301ab070334cb9e6049133fb"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "style",
+              "value": "Classical"
+            },
+            {
+              "name": "title",
+              "value": "Peaceful Piano Meditation"
+            },
+            {
+              "name": "customMode",
+              "value": "true"
+            },
+            {
+              "name": "model",
+              "value": "V3_5"
+            },
+            {
+              "name": "negativeTags",
+              "value": "Heavy Metal, Upbeat Drums"
+            },
+            {
+              "name": "callBackUrl",
+              "value": "https://api.example.com/callback"
+            },
+            {
+              "name": "Instrumental",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2192,
+        384
+      ],
+      "id": "d8dd6b5d-8e6b-4e8b-9b94-59cbe108e56e",
+      "name": "Create Audio Task"
+    },
+    {
+      "parameters": {
+        "amount": 4,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2416,
+        384
+      ],
+      "id": "60bb2deb-8e7c-4afc-b7fa-33d1be8e41f7",
+      "name": "Wait",
+      "webhookId": "c748ecb6-e669-499e-a23b-f3f39400b997"
+    },
+    {
+      "parameters": {
+        "url": "https://api.sunoapi.org/api/v1/generate/record-info",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer a7f66ed8301ab070334cb9e6049133fb"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2592,
+        384
+      ],
+      "id": "b65450c0-9607-43f1-a2e0-32d6389947b7",
+      "name": "generate-audio"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Generate Lyrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Lyrics": {
+      "main": [
+        [
+          {
+            "node": "Create Audio Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Lyrics",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Audio Task": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "generate-audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate-audio": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d55d91e1-2e41-403b-88d6-c1d27f0ff780",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c21d9eee5980c4d969ea8387cbfc94611d830c69b775c1396fadb7a4326a207d"
+  },
+  "nodeGroups": [],
+  "id": "aQUOYq3g7PnJOGPv",
+  "tags": []
+}
