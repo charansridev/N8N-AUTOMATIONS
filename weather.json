@@ -1,0 +1,166 @@
+{
+  "name": "weather",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "brosdev024@gmail.com",
+        "subject": "Today’s Weather & Daily Tips",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        -32
+      ],
+      "id": "ef29c737-bed9-476d-b5ea-86159b9a676b",
+      "name": "Send a message",
+      "webhookId": "3afe4e37-2327-47ae-92ff-edf63847727b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FpXd5z6yff4NmvQg",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "da5f421c-11be-4fe6-b02c-fae1d2de5658",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI daily assistant creating a fun and personalized weather-based plan. Based on this weather data:\n\nTemperature: {{$json.main.temp}}°C\nWeather: {{$json.weather[0].description}}\nHumidity: {{$json.main.humidity}}%\n\nStart with a short, friendly greeting about today’s weather (e.g., “Good morning! Here’s your weather-ready plan for today!”).\n\nThen create a concise plan with these sections:\n\nOUTFIT SUGGESTION\nRecommend one outfit suitable for today’s weather.\nOUTDOOR ACTIVITY\nSuggest one fun outdoor activity, considering the temperature, weather, and humidity.\nWEATHER REMINDER\nInclude a practical, friendly tip (umbrella, sunscreen, jacket, or hydration reminder).\n\nFormatting rules:\nKeep it under 100 words.\nUse a friendly, engaging, and conversational tone.\nDo not use markdown formatting, bold, or special symbols.\nSeparate sections with line breaks and section titles in uppercase.\nSign off with: “Your Daily Weather Assistant”",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        448,
+        -32
+      ],
+      "id": "53fb5178-5f72-4153-be4a-e8db408028bf",
+      "name": "Summarize Weather"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        528,
+        192
+      ],
+      "id": "22359530-0a67-4d85-902c-f8cfcea4c72d",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "opGl9tU4uFcGiWMx",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "cityName": "vijayawada"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "da0dffbc-8c0a-4903-a34b-4725dc244376",
+      "name": "OpenWeatherMap",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "K7uGEpUPCGfk2p3s",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenWeatherMap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Weather": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarize Weather",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "OpenWeatherMap": {
+      "main": [
+        [
+          {
+            "node": "Summarize Weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f8cc8baa-5456-4574-beca-b1e3794e79ce",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c21d9eee5980c4d969ea8387cbfc94611d830c69b775c1396fadb7a4326a207d"
+  },
+  "nodeGroups": [],
+  "id": "wPQ2zu1oz46r5m8ASbslX",
+  "tags": []
+}
