@@ -1,0 +1,227 @@
+{
+  "name": "Transcription Summarizer Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -64,
+        32
+      ],
+      "id": "acdb6e2b-43c9-4bbd-a2d9-1ae2dec0a030",
+      "name": "When chat message received",
+      "webhookId": "063585e8-aae5-4427-8e2c-0124708c9ccc"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.chatInput }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        160,
+        32
+      ],
+      "id": "880dadef-47fa-45ef-aac6-f91cdb6bfc12",
+      "name": "Download video"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "whisper-large-v3"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        384,
+        32
+      ],
+      "id": "344df1f7-eecf-44ef-a35d-aea63f5e9cf5",
+      "name": "Groq Transcription"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "Step-by-Step Execution Flow:\n\n1. Create Document: Use \"Create document\" tool to create a new Google Doc. IMPORTANT: Note the documentId returned by this step.\n2. Add Original Content: Use \"Update document\" tool to add the user's provided text. You MUST use the exact documentId from step 1 in the Doc ID field. Do not use the title.\n3. Generate Summary: Analyze the content and create a comprehensive summary with bullet points covering:\n• Key themes and main points\n• Important details and insights\n• Action items or next steps\n• Conclusions and recommendations\n• Notable data or statistics\n4. Add Summary to Document: Use \"Update document\" tool again to append the summary section to the document using the same documentId.\n5. Retrieve Final Content: Use \"Get document\" tool to fetch the complete document content.\n6. Return Summary: Extract and return the summary portion from the retrieved document content to the user."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        672,
+        32
+      ],
+      "id": "9626f656-1a77-4266-aa07-4d0647893754",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "folderId": "default",
+        "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        816,
+        272
+      ],
+      "id": "b84f4e3e-e034-476d-a48c-e2523b5337f3",
+      "name": "Create a document in Google Docs"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Doc_ID_or_URL', `Your AI generated summary goes here...`, 'string') }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('actionFields0_Text', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        960,
+        272
+      ],
+      "id": "cf9f746b-44a0-49c0-9029-99e83ebf68d5",
+      "name": "Update a document in Google Docs"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        608,
+        288
+      ],
+      "id": "09ba7b2a-d415-496b-82e7-6f308f0b0607",
+      "name": "Groq Chat Model"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Download video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download video": {
+      "main": [
+        [
+          {
+            "node": "Groq Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Transcription": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document in Google Docs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document in Google Docs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "24cc2ca3-31a8-4a07-b5fe-5a27e41bc884",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c21d9eee5980c4d969ea8387cbfc94611d830c69b775c1396fadb7a4326a207d"
+  },
+  "nodeGroups": [],
+  "id": "Qpqzi4s0TJPNnuEY",
+  "tags": []
+}
