@@ -1,0 +1,219 @@
+{
+  "name": "My workflow 18190",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "1ea254f4-725f-4735-b7c8-66e4f3d7580b",
+      "name": "Telegram Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [240, 0],
+      "id": "64a00ee4-06f3-4820-b8d8-f809b944499c",
+      "name": "Get a file"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [448, 0],
+      "id": "287433ad-3163-4941-94f8-299273047bca",
+      "name": "Transcribe a recording"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.content.parts[0].text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a precise data extraction engine for an automated billing system. Your sole task is to analyze the incoming raw text or voice transcription of a merchant recording an invoice, extract the relevant billing data, and convert it into a valid JSON object.\n\nStrictly adhere to the following data extraction schema:\n- customerName (String): The full name of the buyer.\n- items (Array of Objects): A list of all products purchased. Each item must contain:\n  * itemName (String): Clear name of the product.\n  * quantity (Number): Total units ordered. Default to 1 if not specified.\n  * unitPrice (Number): Cost per single item.\n- totalAmount (Number): The final calculated total bill amount for the entire order.\n\nOutput Constraints:\n1. Return ONLY the raw JSON object.\n2. Do NOT wrap the output in markdown blocks like ```json ... ```.\n3. Do NOT include any conversational text, introductory greetings, or explanations. \n\nthis is an example \n{\n  \"customerName\": \"Rahul Sharma\",\n  \"items\": [\n    {\n      \"itemName\": \"Executive Office Chair\",\n      \"quantity\": 5,\n      \"unitPrice\": 1200\n    }\n  ],\n  \"totalAmount\": 6000\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [656, 0],
+      "id": "67cb5540-1101-4038-bb64-aee4e08e7c44",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [656, 192],
+      "id": "cc33b975-603a-43c5-8808-d8d71e0b992b",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the raw string that the Gemini LLM generated\nconst rawString = $input.first().json.text;\n\n// 2. Parse that string into a real JavaScript object\nconst data = JSON.parse(rawString);\n\n// 3. Create the HTML template and inject the variables\nconst htmlTemplate = `\n  <html>\n    <body style=\"font-family: Arial, sans-serif; padding: 40px; color: #333;\">\n      <h1 style=\"color: #2c3e50;\">Invoice</h1>\n      <p><strong>Billed To:</strong> ${data.customerName}</p>\n      <hr style=\"border: 1px solid #eee; margin: 20px 0;\">\n      \n      <table style=\"width: 100%; border-collapse: collapse;\">\n        <tr style=\"background-color: #f8f9fa; text-align: left;\">\n          <th style=\"padding: 10px; border-bottom: 2px solid #ddd;\">Item</th>\n          <th style=\"padding: 10px; border-bottom: 2px solid #ddd;\">Qty</th>\n          <th style=\"padding: 10px; border-bottom: 2px solid #ddd;\">Unit Price</th>\n        </tr>\n        ${data.items.map(item => `\n          <tr>\n            <td style=\"padding: 10px; border-bottom: 1px solid #eee;\">${item.itemName}</td>\n            <td style=\"padding: 10px; border-bottom: 1px solid #eee;\">${item.quantity}</td>\n            <td style=\"padding: 10px; border-bottom: 1px solid #eee;\">₹${item.unitPrice}</td>\n          </tr>\n        `).join('')}\n      </table>\n      \n      <h2 style=\"text-align: right; margin-top: 30px; color: #2c3e50;\">\n        Total: ₹${data.totalAmount}\n      </h2>\n    </body>\n  </html>\n`;\n\n// 4. Return the HTML string so the PDF converter node can use it\nreturn [{ \n    json: { \n        htmlString: htmlTemplate \n    } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1008, 0],
+      "id": "71287697-2252-4005-b1ba-a702bf972afa",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfshift.io/v3/convert/pdf",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "Basic YOUR_PDFSHIFT_API_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source",
+              "value": "={{ $json.htmlString }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1216, 0],
+      "id": "85afc3f6-0132-4d63-a481-58b2dfc5ed98",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1424, 0],
+      "id": "2dfb7f36-e733-4c04-a853-66e73380c427",
+      "name": "Send a document"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9d890fc8-a5ce-40fd-85cb-16974480634c",
+  "meta": {
+    "instanceId": "REPLACE_WITH_YOUR_INSTANCE_ID"
+  },
+  "id": "TVHYq5yRpHsyG6Ow",
+  "tags": []
+}
